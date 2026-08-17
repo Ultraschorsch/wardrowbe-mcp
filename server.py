@@ -34,6 +34,7 @@ token_verifier = JWTVerifier(
     jwks_uri=f"{POCKET_ID_ISSUER}/.well-known/jwks.json",
     issuer=POCKET_ID_ISSUER,
     audience=os.environ["POCKET_ID_CLIENT_ID"],
+    required_scopes=["openid", "email"],
 )
 
 auth = OAuthProxy(
@@ -45,6 +46,9 @@ auth = OAuthProxy(
     base_url=os.environ["MCP_PUBLIC_BASE_URL"],  # e.g. https://wardrowbe-mcp.oachkatzl.me
     jwt_signing_key=os.environ["MCP_JWT_SIGNING_KEY"],
     require_authorization_consent=True,
+    # Pocket-ID requires a scope on the /authorize request - without this,
+    # it responds "Scope is required" before we ever get to login.
+    valid_scopes=["openid", "email", "profile"],
 )
 
 mcp = FastMCP(name="Wardrowbe", auth=auth)
