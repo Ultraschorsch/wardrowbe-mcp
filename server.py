@@ -24,8 +24,15 @@ from fastmcp import FastMCP
 from fastmcp.server.auth import OAuthProxy
 from fastmcp.server.auth.providers.jwt import JWTVerifier
 from fastmcp.server.dependencies import get_access_token
+from key_value.aio.stores.disk import DiskStore
 
 from wardrobe_client import wardrobe_client
+
+# Registered OAuth clients (e.g. ChatGPT's dynamically-registered client) and
+# issued tokens must survive container rebuilds, or every redeploy forces
+# everyone to reconnect their connector from scratch. This directory is
+# mounted as a persistent Docker volume - see docker-compose.yml.
+client_storage = DiskStore(directory="/data/oauth-storage")
 
 POCKET_ID_ISSUER = "https://auth.oachkatzl.me"
 ALLOWED_EMAIL = os.environ["WARDROBE_USER_EMAIL"]  # Johanna only, by design.
@@ -49,6 +56,7 @@ auth = OAuthProxy(
     # Pocket-ID requires a scope on the /authorize request - without this,
     # it responds "Scope is required" before we ever get to login.
     valid_scopes=["openid", "email", "profile"],
+    client_storage=client_storage,
 )
 
 mcp = FastMCP(name="Wardrowbe", auth=auth)
