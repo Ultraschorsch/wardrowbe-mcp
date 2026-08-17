@@ -41,7 +41,10 @@ token_verifier = JWTVerifier(
     jwks_uri=f"{POCKET_ID_ISSUER}/.well-known/jwks.json",
     issuer=POCKET_ID_ISSUER,
     audience=os.environ["POCKET_ID_CLIENT_ID"],
-    required_scopes=["openid", "email"],
+    # NOTE: no required_scopes here - Pocket-ID's access tokens carry no
+    # "scope" claim at all (only aud/exp/iat/iss/sub/type). Scope enforcement
+    # already happened at Pocket-ID's own consent screen; requiring a scope
+    # claim that never exists would reject every single upstream token.
 )
 
 auth = OAuthProxy(
