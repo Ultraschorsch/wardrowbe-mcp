@@ -97,7 +97,11 @@ class WardrobeClient:
         occasion: str | None = None,
         formality: str | None = None,
         season: str | None = None,
-        status: str = "active",
+        # "ready" = finished AI tagging, usable item. This is the closest
+        # match to "active wardrobe item"; the ItemStatus enum has no
+        # "active" value (only processing/ready/error/archived), and
+        # is_archived defaults to False on the backend already.
+        status: str = "ready",
         page: int = 1,
         page_size: int = 50,
     ) -> Any:
@@ -135,7 +139,7 @@ class WardrobeClient:
         params: dict[str, Any] = {
             "page": 1,
             "page_size": 100,
-            "status": "active",
+            "status": "ready",
             "occasion": occasion,
         }
         if season:
