@@ -21,6 +21,10 @@ import httpx
 WARDROBE_INTERNAL_URL = os.environ.get("WARDROBE_INTERNAL_URL", "http://backend:8000")
 WARDROBE_USER_EXTERNAL_ID = os.environ["WARDROBE_USER_EXTERNAL_ID"]
 WARDROBE_USER_EMAIL = os.environ["WARDROBE_USER_EMAIL"]
+# UserSyncRequest requires display_name (added upstream). This server only
+# ever syncs Johanna's account, so a fixed default is fine; override via
+# env if you ever want a different display name.
+WARDROBE_USER_DISPLAY_NAME = os.environ.get("WARDROBE_USER_DISPLAY_NAME", "Johanna")
 
 # Fields that must never leave this process, even though the underlying
 # Wardrowbe API might include them on some responses. Stripped recursively.
@@ -62,6 +66,7 @@ class WardrobeClient:
             json={
                 "external_id": WARDROBE_USER_EXTERNAL_ID,
                 "email": WARDROBE_USER_EMAIL,
+                "display_name": WARDROBE_USER_DISPLAY_NAME,
             },
         )
         resp.raise_for_status()
