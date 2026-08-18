@@ -44,7 +44,13 @@ class WardrobeClient:
     def __init__(self) -> None:
         self._token: str | None = None
         self._token_expires_at: float = 0.0
-        self._http = httpx.AsyncClient(base_url=WARDROBE_INTERNAL_URL, timeout=15.0)
+        # All Wardrowbe backend routes live under /api/v1 (see app.main:
+        # `app.include_router(api_router, prefix="/api/v1")`). Bake that
+        # into the base_url so every call below (/auth/sync, /items,
+        # /outfits, /analytics) resolves correctly instead of 404ing.
+        self._http = httpx.AsyncClient(
+            base_url=f"{WARDROBE_INTERNAL_URL}/api/v1", timeout=15.0
+        )
 
     async def _ensure_token(self) -> str:
         # Refresh a bit before actual expiry to avoid racing a 401.
