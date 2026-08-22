@@ -99,9 +99,9 @@ async def _assert_is_johanna() -> None:
     resp.raise_for_status()
     email = (resp.json().get("email") or "").lower().strip()
 
-        if email not in ALLOWED_EMAILS:
+    if email not in ALLOWED_EMAILS:
         raise PermissionError(
-                        "This Wardrowbe connector is only available to specific accounts."
+            "This Wardrowbe connector is only available to specific accounts."
         )
 
 
