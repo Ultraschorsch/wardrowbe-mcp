@@ -61,6 +61,12 @@ auth = OAuthProxy(
     valid_scopes=["openid", "email", "profile"],
     client_storage=client_storage,
 )
+# FastMCP only derives the DCR default scope from token_verifier.required_scopes,
+# which we deliberately leave unset above (Pocket-ID tokens carry no scope
+# claim). Without this, DCR clients that omit "scope" during /register (e.g.
+# ChatGPT) get an empty registered scope, so every later /authorize call fails
+# with invalid_scope before ever reaching Pocket-ID.
+auth._default_scope_str = "openid email profile"
 
 mcp = FastMCP(name="Wardrowbe", auth=auth)
 
