@@ -35,7 +35,12 @@ from wardrobe_client import wardrobe_client
 client_storage = DiskStore(directory="/data/oauth-storage")
 
 POCKET_ID_ISSUER = "https://auth.oachkatzl.me"
-ALLOWED_EMAIL = os.environ["WARDROBE_USER_EMAIL"]  # Johanna only, by design.
+# Comma-separated list of Pocket-ID emails allowed to use this connector.
+ALLOWED_EMAILS = {
+    e.strip().lower()
+    for e in os.environ["WARDROBE_USER_EMAIL"].split(",")
+    if e.strip()
+}
 
 token_verifier = JWTVerifier(
     jwks_uri=f"{POCKET_ID_ISSUER}/.well-known/jwks.json",
@@ -94,9 +99,9 @@ async def _assert_is_johanna() -> None:
     resp.raise_for_status()
     email = (resp.json().get("email") or "").lower().strip()
 
-    if email != ALLOWED_EMAIL.lower().strip():
+        if email not in ALLOWED_EMAILS:
         raise PermissionError(
-            "This Wardrowbe connector is only available to Johanna's account."
+                        "This Wardrowbe connector is only available to specific accounts."
         )
 
 
