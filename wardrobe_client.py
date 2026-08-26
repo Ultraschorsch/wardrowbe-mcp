@@ -19,6 +19,10 @@ from typing import Any
 import httpx
 
 WARDROBE_INTERNAL_URL = os.environ.get("WARDROBE_INTERNAL_URL", "http://backend:8000")
+# Shared secret proving this process is a trusted internal service. Required
+# now that the backend has real OIDC configured (dev-mode auto-sync is no
+# longer available once OIDC is on) - see backend app/api/auth.py.
+WARDROBE_INTERNAL_SERVICE_SECRET = os.environ["WARDROBE_INTERNAL_SERVICE_SECRET"]
 WARDROBE_USER_EXTERNAL_ID = os.environ["WARDROBE_USER_EXTERNAL_ID"]
 WARDROBE_USER_EMAIL = os.environ["WARDROBE_USER_EMAIL"]
 # UserSyncRequest requires display_name (added upstream). This server only
@@ -68,6 +72,7 @@ class WardrobeClient:
                 "email": WARDROBE_USER_EMAIL,
                 "display_name": WARDROBE_USER_DISPLAY_NAME,
             },
+            headers={"X-Internal-Service-Secret": WARDROBE_INTERNAL_SERVICE_SECRET},
         )
         resp.raise_for_status()
         data = resp.json()
