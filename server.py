@@ -52,7 +52,23 @@ token_verifier = JWTVerifier(
     # claim that never exists would reject every single upstream token.
 )
 
-auth = OAuthProxy(
+class PocketIDOAuthProxy(OAuthProxy):
+    """OAuthProxy that does not forward the RFC 8707 "resource" parameter.
+
+    ChatGPT sends resource=<MCP_PUBLIC_BASE_URL>/mcp on /authorize. FastMCP
+    2.14 forwards it unconditionally to the upstream IdP, and Pocket-ID
+    rejects it ("The 'resource' parameter is invalid"), which breaks every
+    (re)connect. Newer FastMCP has forward_resource=False for this; until we
+    move to that, strip it here. fastmcp is pinned in requirements.txt
+    because this overrides a private method.
+    """
+
+    def _build_upstream_authorize_url(self, txn_id, transaction):
+        transaction = {k: v for k, v in transaction.items() if k != "resource"}
+        return super()._build_upstream_authorize_url(txn_id, transaction)
+
+
+auth = PocketIDOAuthProxy(
     upstream_authorization_endpoint=f"{POCKET_ID_ISSUER}/authorize",
     upstream_token_endpoint=f"{POCKET_ID_ISSUER}/api/oidc/token",
     upstream_client_id=os.environ["POCKET_ID_CLIENT_ID"],
