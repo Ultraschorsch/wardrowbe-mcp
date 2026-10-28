@@ -24,7 +24,11 @@ WARDROBE_INTERNAL_URL = os.environ.get("WARDROBE_INTERNAL_URL", "http://backend:
 # longer available once OIDC is on) - see backend app/api/auth.py.
 WARDROBE_INTERNAL_SERVICE_SECRET = os.environ["WARDROBE_INTERNAL_SERVICE_SECRET"]
 WARDROBE_USER_EXTERNAL_ID = os.environ["WARDROBE_USER_EXTERNAL_ID"]
-WARDROBE_USER_EMAIL = os.environ["WARDROBE_USER_EMAIL"]
+# WARDROBE_USER_EMAIL is a comma-separated allowlist (server.py uses all of
+# them for the Pocket-ID check). /auth/sync needs exactly one valid address -
+# the account owner, listed first. Since upstream v1.11 the backend validates
+# the email format, so sending the whole list fails with 422.
+WARDROBE_USER_EMAIL = os.environ["WARDROBE_USER_EMAIL"].split(",")[0].strip()
 # UserSyncRequest requires display_name (added upstream). This server only
 # ever syncs Johanna's account, so a fixed default is fine; override via
 # env if you ever want a different display name.
