@@ -63,8 +63,14 @@ class PocketIDOAuthProxy(OAuthProxy):
     because this overrides a private method.
     """
 
+    # Pocket-ID requires a scope on /authorize ("Scope is required"), and we
+    # need openid+email for the userinfo email check. Always request these
+    # upstream, independent of what the MCP client asked for.
+    UPSTREAM_SCOPES = ["openid", "email", "profile"]
+
     def _build_upstream_authorize_url(self, txn_id, transaction):
         transaction = {k: v for k, v in transaction.items() if k != "resource"}
+        transaction["scopes"] = list(self.UPSTREAM_SCOPES)
         return super()._build_upstream_authorize_url(txn_id, transaction)
 
 
@@ -77,9 +83,13 @@ auth = PocketIDOAuthProxy(
     base_url=os.environ["MCP_PUBLIC_BASE_URL"],  # e.g. https://wardrowbe-mcp.oachkatzl.me
     jwt_signing_key=os.environ["MCP_JWT_SIGNING_KEY"],
     require_authorization_consent=True,
-    # Pocket-ID requires a scope on the /authorize request - without this,
-    # it responds "Scope is required" before we ever get to login.
-    valid_scopes=["openid", "email", "profile"],
+    # Scopes advertised to MCP clients (ChatGPT). Deliberately WITHOUT "openid":
+    # when ChatGPT sees/requests "openid" it treats this server as an OIDC
+    # provider, fetches /.well-known/openid-configuration (404 here, we are
+    # not an OIDC provider) and restarts the login -> endless re-login loop.
+    # Pocket-ID still gets "openid email profile" upstream, see
+    # PocketIDOAuthProxy.UPSTREAM_SCOPES.
+    valid_scopes=["email", "profile"],
     client_storage=client_storage,
 )
 # FastMCP only derives the DCR default scope from token_verifier.required_scopes,
@@ -87,7 +97,7 @@ auth = PocketIDOAuthProxy(
 # claim). Without this, DCR clients that omit "scope" during /register (e.g.
 # ChatGPT) get an empty registered scope, so every later /authorize call fails
 # with invalid_scope before ever reaching Pocket-ID.
-auth._default_scope_str = "openid email profile"
+auth._default_scope_str = "email profile"
 
 mcp = FastMCP(name="Wardrowbe", auth=auth)
 
